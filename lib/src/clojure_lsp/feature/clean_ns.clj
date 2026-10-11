@@ -533,10 +533,10 @@
       (if (and (get-in settings [:clean :sort :import] true)
                (get-in settings [:clean :sort :import-classes] true)
                (not remove-whole-package-import)
-               (not (some-> parent-node z/down z/sexpr #{:clj :cljs})) ;; reader conditionals node
+               (not (some-> parent-node z/down z/sexpr #{:clj :cljs :cljr :bb :default})) ;; reader conditionals node
                (not= :uneval (some-> parent-node z/up z/next z/tag))
-               (not (some-> parent-node z/up z/next z/sexpr #{:clj :cljs})) ;; inside reader conditionals
-               (not (some-> parent-node z/up z/up z/next z/sexpr #{:clj :cljs})) ;; list of imports inside reader macros
+               (not (some-> parent-node z/up z/next z/sexpr #{:clj :cljs :cljr :bb :default})) ;; inside reader conditionals
+               (not (some-> parent-node z/up z/up z/next z/sexpr #{:clj :cljs :cljr :bb :default})) ;; list of imports inside reader macros
                (> (count classes) 1))
         (sorting-package-import-classes parent-node clean-ctx import-loc base-package classes settings node)
         node))

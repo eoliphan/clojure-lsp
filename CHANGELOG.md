@@ -19,6 +19,7 @@
 - Report the processing of external file changes (`workspace/didChangeWatchedFiles`) as server-initiated work done progress (`window/workDoneProgress/create`), ending only once dependent files are re-analyzed, so clients can wait for those changes to be fully processed. Deletions are now processed in the same debounced batch as creations and changes instead of immediately, and a file re-created within that batch is analyzed rather than removed.
 - Fix the "Fetching libs for completion" progress never showing up in clients, as its token was never created via `window/workDoneProgress/create`.
 - Fix `move-form` removing the source namespace require from files that still use it through an alias. #1444
+- Fix `clean-ns` failing with an internal error on a `:bb` reader-conditional branch inside `:import`. #2496
 
 ## 2026.07.06-14.34.19
 
