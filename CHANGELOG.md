@@ -20,6 +20,7 @@
 - Fix the "Fetching libs for completion" progress never showing up in clients, as its token was never created via `window/workDoneProgress/create`.
 - Fix `move-form` removing the source namespace require from files that still use it through an alias. #1444
 - Fix `clean-ns` failing with an internal error on a `:bb` reader-conditional branch inside `:import`. #2496
+- Fix `promote-fn` passing a captured local twice when promoting a `fn` to a `defn` in a `.cljc` file. #2498
 
 ## 2026.07.06-14.34.19
 
