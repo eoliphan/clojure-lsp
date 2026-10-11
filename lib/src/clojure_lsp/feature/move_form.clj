@@ -40,7 +40,6 @@
                                     (:var-usages local-buckets))
 
         other-source-usages (filter #(and (not (:refer %))
-                                          (not (:alias %))
                                           (= (:to %) source-ns)
                                           (not= (:name %) (:name def-to-move)))
                                     (:var-usages local-buckets))

@@ -164,3 +164,26 @@
                e-results))
         (is (= (:result f-code)
                f-results))))))
+
+(deftest move-form-keeps-source-require-used-through-alias-test
+  (testing "a user that still uses the source namespace through an alias keeps the require"
+    (h/reset-components!)
+    (let [a-uri (h/file-uri "file:///a.clj")
+          b-uri (h/file-uri "file:///b.clj")
+          c-uri (h/file-uri "file:///c.clj")
+          zloc (h/load-code-and-zloc (h/code "(ns apple)"
+                                             "|(def bar inc)"
+                                             "(def qux 1)")
+                                     a-uri)
+          _ (h/load-code-and-locs (h/code "(ns bread)") b-uri)
+          _ (h/load-code-and-locs (h/code "(ns crumb (:require [apple :as a]))"
+                                          "(a/bar 1)"
+                                          "(a/qux 2)")
+                                  c-uri)
+          results (:changes-by-uri (move-form/move-form zloc a-uri (h/components) (h/file-path "/b.clj")))
+          c-results (h/changes-by-uri->code results c-uri (h/db))]
+      (is (= (h/code "(ns crumb (:require [apple :as a]"
+                     "                    [bread]))"
+                     "(bread/bar 1)"
+                     "(a/qux 2)")
+             c-results)))))
