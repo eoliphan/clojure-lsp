@@ -1821,6 +1821,8 @@
                            "           (java.util.regex Pattern)))"
                            "(Associative.)"
                            "(Pattern/compile \"a\")")
+                   true
+                   "file:///a.cljc")))
 
 (deftest clean-ns-empty-reader-conditional-branch-test
   (testing "removing the only unused form of a branch removes the feature key too"
