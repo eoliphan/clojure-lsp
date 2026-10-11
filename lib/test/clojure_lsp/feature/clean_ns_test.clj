@@ -1805,3 +1805,21 @@
                              "))"
                              "async/chan"
                              "edn/read")))))
+
+(deftest clean-ns-import-reader-conditional-with-bb-test
+  (testing "a :bb branch inside :import does not break clean-ns"
+    (test-clean-ns {}
+                   (h/code "(ns foo.bar"
+                           "  (:import #?(:bb (clojure.lang Associative)"
+                           "              :clj (clojure.lang Associative))"
+                           "           (java.util.regex Pattern)))"
+                           "(Associative.)"
+                           "(Pattern/compile \"a\")")
+                   (h/code "(ns foo.bar"
+                           "  (:import #?(:bb (clojure.lang Associative)"
+                           "              :clj (clojure.lang Associative))"
+                           "           (java.util.regex Pattern)))"
+                           "(Associative.)"
+                           "(Pattern/compile \"a\")")
+                   true
+                   "file:///a.cljc")))
