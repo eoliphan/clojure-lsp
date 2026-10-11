@@ -1,0 +1,124 @@
+# Fork-only workflow: builds the jar launcher and Linux native binaries for
+# eoliphan/clojure-lsp and attaches them to the GitHub release of an
+# `integration-*` tag. It never runs outside that fork and uses no secrets.
+name: Fork native build
+
+on:
+  push:
+    tags:
+      - integration-*
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing integration-* tag to build and publish
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  jar:
+    if: github.repository == 'eoliphan/clojure-lsp'
+    name: Build JVM jar and launcher
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install Clojure
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: '1.12.0.1495'
+          bb: '0.9.161'
+      - name: Generate standalone jar
+        run: bb cli-prod-jar
+      - name: Generate cli launcher
+        run: bb prod-cli
+      - name: Checksums
+        run: sha256sum clojure-lsp | awk '{print $1 "  clojure-lsp"}' > clojure-lsp.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clojure-lsp-standalone.jar
+          path: clojure-lsp-standalone.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launcher
+          path: |
+            clojure-lsp
+            clojure-lsp.sha256
+
+  native:
+    if: github.repository == 'eoliphan/clojure-lsp'
+    name: Native linux ${{ matrix.arch }}
+    needs: [jar]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: clojure-lsp-standalone.jar
+      - name: Install clojure build tools
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: '1.12.0.1495'
+          bb: '0.9.161'
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build native image
+        env:
+          CLOJURE_LSP_JAR: "../clojure-lsp-standalone.jar"
+          CLOJURE_LSP_XMX: "-J-Xmx6g"
+        run: bb native-cli
+      - name: Smoke test
+        run: ./clojure-lsp --version
+      - name: Zip and checksum
+        run: |
+          zip clojure-lsp-native-linux-${{ matrix.arch }}.zip clojure-lsp
+          sha256sum clojure-lsp-native-linux-${{ matrix.arch }}.zip | awk '{print $1}' > clojure-lsp-native-linux-${{ matrix.arch }}.zip.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-linux-${{ matrix.arch }}
+          path: |
+            clojure-lsp-native-linux-${{ matrix.arch }}.zip
+            clojure-lsp-native-linux-${{ matrix.arch }}.zip.sha256
+
+  publish:
+    if: github.repository == 'eoliphan/clojure-lsp'
+    name: Attach to release
+    needs: [jar, native]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Create release if missing and upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -l out
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes "Fork build of $TAG. See the release notes of the first integration release for the list of fixes."
+          gh release upload "$TAG" out/clojure-lsp out/clojure-lsp.sha256 out/clojure-lsp-native-linux-*.zip out/clojure-lsp-native-linux-*.zip.sha256 --clobber
