@@ -164,3 +164,22 @@
                e-results))
         (is (= (:result f-code)
                f-results))))))
+
+(deftest move-form-destination-already-using-the-form-test
+  (testing "the destination's own uses of the moved var are rewritten to the bare name"
+    (h/reset-components!)
+    (let [a-uri (h/file-uri "file:///a.clj")
+          b-uri (h/file-uri "file:///b.clj")
+          zloc (h/load-code-and-zloc (h/code "(ns apple)"
+                                             "|(def bar inc)")
+                                     a-uri)
+          _ (h/load-code-and-locs (h/code "(ns bread (:require [apple :as a]))"
+                                          "(def qux (a/bar 1))")
+                                  b-uri)
+          results (:changes-by-uri (move-form/move-form zloc a-uri (h/components) (h/file-path "/b.clj")))
+          b-results (h/changes-by-uri->code results b-uri (h/db))]
+      (is (= (h/code "(ns bread (:require [apple :as a]))"
+                     "(def qux (bar 1))"
+                     ""
+                     "(def bar inc)")
+             b-results)))))
