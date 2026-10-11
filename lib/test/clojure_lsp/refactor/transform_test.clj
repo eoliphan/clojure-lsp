@@ -2413,7 +2413,7 @@
 (defn- extract-to-def
   [code new-def-name]
   (let [zloc (h/zloc-from-code code)]
-    (transform/extract-to-def zloc new-def-name (h/db))))
+    (transform/extract-to-def zloc h/default-uri new-def-name (h/db))))
 
 (deftest extract-to-def-test
   (h/reset-components!)
@@ -2445,6 +2445,23 @@
            (-> "|{:a 1}"
                (extract-to-def "foo")
                as-strings)))))
+
+(deftest extract-to-def-locals-test
+  (testing "an expression that uses a local is not extracted"
+    (h/reset-components!)
+    (let [zloc (h/load-code-and-zloc (h/code "(defn f [x]"
+                                             "  (let [y 2]"
+                                             "    (+ |(* x y) 1)))"))]
+      (is (not (transform/can-extract-to-def? zloc h/default-uri (h/db))))
+      (is (nil? (transform/extract-to-def zloc h/default-uri "xy" (h/db))))))
+  (testing "an expression that does not use a local is extracted"
+    (h/reset-components!)
+    (let [zloc (h/load-code-and-zloc (h/code "(defn f [x]"
+                                             "  (let [y 2]"
+                                             "    (+ |(* 2 3) x y)))"))]
+      (is (transform/can-extract-to-def? zloc h/default-uri (h/db)))
+      (is (= ["\n(def ^:private six\n  (* 2 3))\n" "six"]
+             (as-strings (transform/extract-to-def zloc h/default-uri "six" (h/db))))))))
 
 (deftest can-create-test?
   (testing "when on multiples functions"

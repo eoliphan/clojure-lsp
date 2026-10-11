@@ -24,6 +24,7 @@
 - Fix `add-missing-import` failing with an internal error when called without the optional class name. #2502
 - Fix `move-form` inserting a stray symbol at the top of the destination file when the destination already uses the moved var through an alias. #2494
 - Fix `clean-ns` leaving a feature key with no form (e.g. `#?(:clj :cljs (...))`) when it removes the only form of a reader-conditional branch in the `ns` form. #2497
+- Do not offer or run `extract-to-def` on an expression that uses locals, which produced a top-level `def` referring to them. #2500
 
 ## 2026.07.06-14.34.19
 

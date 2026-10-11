@@ -1041,20 +1041,22 @@
                  (not (zero? (count fn-calls)))
                  (not (validate-all-arg-counts db uri fn-calls args)))))))))
 
-(defn ^:private extract-to-def-params [zloc]
+(defn ^:private extract-to-def-params [zloc uri db]
   ;; the expression that will be extracted
   (when-let [zloc (or (z/skip-whitespace z/right zloc)
                       (z/skip-whitespace z/up zloc))]
     ;; the top-level form it will be extracted from (possibly the same as zloc)
     (when-let [form-loc (edit/to-top zloc)]
-      {:zloc zloc
-       :form-loc form-loc})))
+      ;; a top-level def cannot refer to locals of the form it is extracted from
+      (when-not (seq (q/find-local-usages-defined-outside-form db uri (meta (z/node zloc))))
+        {:zloc zloc
+         :form-loc form-loc}))))
 
-(defn can-extract-to-def? [zloc]
-  (boolean (extract-to-def-params zloc)))
+(defn can-extract-to-def? [zloc uri db]
+  (boolean (extract-to-def-params zloc uri db)))
 
-(defn extract-to-def [zloc def-name db]
-  (when-let [{:keys [zloc form-loc]} (extract-to-def-params zloc)]
+(defn extract-to-def [zloc uri def-name db]
+  (when-let [{:keys [zloc form-loc]} (extract-to-def-params zloc uri db)]
     (let [expr-node (z/node zloc)
           expr-meta (meta expr-node)
 
