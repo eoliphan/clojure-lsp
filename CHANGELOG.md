@@ -21,6 +21,7 @@
 - Fix `move-form` removing the source namespace require from files that still use it through an alias. #1444
 - Fix `clean-ns` failing with an internal error on a `:bb` reader-conditional branch inside `:import`. #2496
 - Fix `promote-fn` passing a captured local twice when promoting a `fn` to a `defn` in a `.cljc` file. #2498
+- Fix `add-missing-import` failing with an internal error when called without the optional class name. #2502
 
 ## 2026.07.06-14.34.19
 
