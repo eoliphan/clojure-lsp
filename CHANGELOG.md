@@ -23,6 +23,7 @@
 - Fix `promote-fn` passing a captured local twice when promoting a `fn` to a `defn` in a `.cljc` file. #2498
 - Fix `add-missing-import` failing with an internal error when called without the optional class name. #2502
 - Fix `move-form` inserting a stray symbol at the top of the destination file when the destination already uses the moved var through an alias. #2494
+- Fix `clean-ns` leaving a feature key with no form (e.g. `#?(:clj :cljs (...))`) when it removes the only form of a reader-conditional branch in the `ns` form. #2497
 
 ## 2026.07.06-14.34.19
 
