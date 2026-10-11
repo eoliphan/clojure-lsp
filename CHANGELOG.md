@@ -22,6 +22,7 @@
 - Fix `clean-ns` failing with an internal error on a `:bb` reader-conditional branch inside `:import`. #2496
 - Fix `promote-fn` passing a captured local twice when promoting a `fn` to a `defn` in a `.cljc` file. #2498
 - Fix `add-missing-import` failing with an internal error when called without the optional class name. #2502
+- Fix `move-form` inserting a stray symbol at the top of the destination file when the destination already uses the moved var through an alias. #2494
 
 ## 2026.07.06-14.34.19
 

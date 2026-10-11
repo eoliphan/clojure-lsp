@@ -135,7 +135,7 @@
                                  (into (for [dest-ref (vec dest-refs)
                                              :let [dest-ref-loc (edit/find-at-element-name insertion-loc dest-ref)]]
                                          {:loc (z/replace dest-ref-loc (symbol (name (z/sexpr dest-ref-loc))))
-                                          :range (meta dest-ref-loc)})))
+                                          :range (meta (z/node dest-ref-loc))})))
                 usage-changes-by-uri (->> (dissoc per-file-usages dest-uri)
                                           (medley/map-kv-vals
                                             (fn [file-uri usages]
